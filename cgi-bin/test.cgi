@@ -1,6 +1,5 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 
-print "Content-type: text/html"
-print
-print "Hello Agurim!"
+print("Content-type: text/html\n")
+print("Hello Agurim!")
 

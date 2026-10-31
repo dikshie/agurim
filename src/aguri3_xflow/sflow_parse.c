@@ -88,7 +88,7 @@ int
 parse_sflow_datagram(const char *bp, int len)
 {
 	const char *p = bp;
-	u_int32_t addr_type, agent_id = 0, seqno, uptime, nrecords;
+	u_int32_t addr_type, agent_id = 0, nrecords;
 	int	i;
 
 	timestamp = time(NULL);	/* timestamp for this sflow datagram */
@@ -114,8 +114,7 @@ parse_sflow_datagram(const char *bp, int len)
 	if (sflow_version >= 5) {
 		agent_id	= buffer_read_4(&p);
 	}
-	seqno	 	= buffer_read_4(&p);
-	uptime	 	= buffer_read_4(&p);
+	buffer_skip(&p, 8);	/* skip seqno and uptime */
 	nrecords 	= buffer_read_4(&p);
 
 #if 1
@@ -144,9 +143,9 @@ int
 parse_sflow4_sample(const char **p)
 {
 	u_int32_t sample_type, packetdata_type;
-	u_int32_t seqno, src_id, srate, total, drops, input, output;
+	u_int32_t srate;
 	u_int32_t protocol, framelen, snaplen;
-	u_int32_t interval, counters_version;
+	u_int32_t counters_version;
 	u_int32_t nextended, extended_type, addr_type;
 	u_int32_t aspath_len, asn_len, community_len, str_len;
 	int i;
@@ -156,13 +155,9 @@ parse_sflow4_sample(const char **p)
 		fprintf(stderr, "sflow4: sample_type:%u\n", sample_type);
 	switch (sample_type) {
 	case 1: /* flow sample */
-		seqno 	= buffer_read_4(p);
-		src_id 	= buffer_read_4(p);
+		buffer_skip(p, 8);	/* skip seqno and src_id */
 		srate 	= buffer_read_4(p);
-		total 	= buffer_read_4(p);
-		drops 	= buffer_read_4(p);
-		input 	= buffer_read_4(p);
-		output 	= buffer_read_4(p);
+		buffer_skip(p, 16);	/* skip total, drops, input, output */
 
 		sampling_rate = srate;
 		
@@ -287,9 +282,7 @@ parse_sflow4_sample(const char **p)
 		}
 		break;
 	case 2: /* counter sample */
-		seqno 	= buffer_read_4(p);
-		src_id 	= buffer_read_4(p);
-		interval = buffer_read_4(p);
+		buffer_skip(p, 12);	/* skip seqno, src_id, interval */
 		counters_version = buffer_read_4(p);
 		if (verbose > 0)
 			fprintf(stderr, "counter sample: type:%u\n", counters_version);
@@ -338,7 +331,7 @@ int
 parse_sflow5(const char **p)
 {
 	u_int32_t format, len;
-	u_int32_t seqno, src_id, srate, total, drops, input, output, nrecords;
+	u_int32_t srate, nrecords;
 	u_int32_t record_type, record_len;
 	u_int32_t protocol, framelen, stripped;
 	int snaplen, i;
@@ -350,13 +343,9 @@ parse_sflow5(const char **p)
 				format, len);
 	switch (format) {
 	case 1: /* flow sample */
-		seqno 	= buffer_read_4(p);
-		src_id 	= buffer_read_4(p);
+		buffer_skip(p, 8);	/* skip seqno and src_id */
 		srate 	= buffer_read_4(p);
-		total 	= buffer_read_4(p);
-		drops 	= buffer_read_4(p);
-		input 	= buffer_read_4(p);
-		output 	= buffer_read_4(p);
+		buffer_skip(p, 16);	/* skip total, drops, input, output */
 		nrecords	= buffer_read_4(p);
 
 		sampling_rate = srate;

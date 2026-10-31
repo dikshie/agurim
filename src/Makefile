@@ -15,7 +15,10 @@ agurim: $(AGURIM_OBJS);   $(CC) $(CFLAGS) -o $@ $(AGURIM_OBJS) -lm
 
 aguri3: $(AGURI3_OBJS);   $(CC) $(CFLAGS) -o $@ $(AGURI3_OBJS) -lpcap -lpthread -lm
 
-install: $(PROG)
+install: $(PROGS)
 	$(INSTALL) -m 0755 $(PROGS) $(PREFIX)/bin
+
+test: all
+	@../tests/run_tests.sh
 
 clean:;	-rm -f $(PROGS) *.o core *.core *~

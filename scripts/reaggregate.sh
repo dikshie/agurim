@@ -31,20 +31,26 @@ while getopts "d:o:p:r:s:t:v" opt; do
 done
 
 
+# Allow agurim in PATH if /usr/local/bin/agurim is not present
+if [ ! -x "${agurim}" ] && command -v agurim >/dev/null 2>&1; then
+    agurim="$(command -v agurim)"
+fi
+
 if [ "X${timestamp}" = "X" ]; then
     # if timestamp is not specified, use 'current time' - '1 hour'
     osname=`uname -s`
     case $osname in
-	Linux) timestamp=$(/bin/date -d '1 hour ago' '+%Y %m %d %H') ;;
-	*)     timestamp=$(/bin/date -v -1H '+%Y %m %d %H') ;;
+	Linux) timestamp=$(/bin/date -d '1 hour ago' '+%Y %m %d %H %M') ;;
+	*)     timestamp=$(/bin/date -v -1H '+%Y %m %d %H %M') ;;
     esac
     set -- $timestamp
     year=$1
     month=$2
     day=$3
     hour=$4
+    min=$5
     if [ "${min}" = "00" ]; then
-	# if zero minute, add extra wait for the primary aggregatin to finish
+	# if zero minute, add extra wait for the primary aggregation to finish
 	sleep 20
     fi
 else

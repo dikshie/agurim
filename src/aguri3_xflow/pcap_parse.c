@@ -110,9 +110,11 @@ pcap_read(const char *dumpfile, const char *interface,
 		if (interface != NULL) {
 			device = interface;
 		} else {
-			device = pcap_lookupdev(errbuf);
-			if (device == NULL)
+			pcap_if_t *alldevs = NULL;
+			if (pcap_findalldevs(&alldevs, errbuf) == -1 || alldevs == NULL)
 				errx(1, "%s", errbuf);
+			device = strdup(alldevs->name);
+			pcap_freealldevs(alldevs);
 		}
 		if (snaplen == 0)
 			snaplen = DEFAULT_SNAPLEN;

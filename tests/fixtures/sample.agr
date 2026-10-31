@@ -1,0 +1,28 @@
+
+%!AGURI-2.0
+%%StartTime: Sat Oct 31 15:00:00 2026 (2026/10/31 15:00:00)
+%%EndTime: Sat Oct 31 15:05:00 2026 (2026/10/31 15:05:00)
+%AvgRate: 1.00Mbps 100.00pps
+%total: 37500000 bytes  30000 packets
+% criteria: combination (threshold 1% for addresses, 4% for protocol)
+%input odflows: IPv4:2 IPv6:0
+%aggregated in 1 ms
+
+[ 1] 192.0.2.1 198.51.100.1: 25000000 (66.67%)	20000 (66.67%)
+	[6:443:52123]100.0% 100.0%
+[ 2] 192.0.2.2 198.51.100.2: 12500000 (33.33%)	10000 (33.33%)
+	[17:53:53]100.0% 100.0%
+
+%!AGURI-2.0
+%%StartTime: Sat Oct 31 15:05:00 2026 (2026/10/31 15:05:00)
+%%EndTime: Sat Oct 31 15:10:00 2026 (2026/10/31 15:10:00)
+%AvgRate: 1.20Mbps 120.00pps
+%total: 45000000 bytes  36000 packets
+% criteria: combination (threshold 1% for addresses, 4% for protocol)
+%input odflows: IPv4:2 IPv6:0
+%aggregated in 1 ms
+
+[ 1] 192.0.2.1 198.51.100.1: 30000000 (66.67%)	24000 (66.67%)
+	[6:443:52123]100.0% 100.0%
+[ 2] 192.0.2.2 198.51.100.2: 15000000 (33.33%)	12000 (33.33%)
+	[17:53:53]100.0% 100.0%

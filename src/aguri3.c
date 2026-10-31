@@ -51,6 +51,8 @@
 #include <paths.h>
 #include <signal.h>
 #include <pthread.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 #ifdef __FreeBSD__
 #include <pthread_np.h>
 #endif
@@ -381,7 +383,7 @@ switch_response(void)
 			err(1, "mutex_trylock returned %d", rval);
 		blocking_count++; /* increment the stat counter */
 		if (debug)
-			fprintf(stderr, "response is still locked by aggregator!! epoch:%lu\n", epoch);
+			fprintf(stderr, "response is still locked by aggregator!! epoch:%" PRIu64 "\n", epoch);
 		if ((rval = pthread_mutex_lock(&resp_mutex[epoch & 1])) != 0)
 			err(1, "mutex_lock returned %d", rval);
 	}

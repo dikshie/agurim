@@ -1,54 +1,129 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 import common
 import subprocess
 import shlex
-import cgi
+import os
+import sys
 import json
 import ast
-import sys
+import re
+from urllib.parse import parse_qs
 
 agurimcmd = "/usr/local/bin/agurim"
 data_dir = "../"	# path to the datasets (relative from the cgi-bin page)
 def_dsname = "dataset"	# default dsname
 
-res = {}
+def get_params():
+    params = {}
+    # Read query string (GET)
+    qs = os.environ.get('QUERY_STRING', '')
+    if qs:
+        for k, v in parse_qs(qs).items():
+            if v:
+                params[k] = v[0]
+    # Read body (POST)
+    content_length = os.environ.get('CONTENT_LENGTH')
+    if content_length:
+        try:
+            length = int(content_length)
+            body = sys.stdin.read(length)
+            for k, v in parse_qs(body).items():
+                if v:
+                    params[k] = v[0]
+        except (ValueError, IOError):
+            pass
+    return params
 
-sys.stdout.write("Content-Type: application/json")
+def safe_int(val, default=0):
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return default
 
-sys.stdout.write("\n")
-sys.stdout.write("\n")
+params = get_params()
 
-# parse parameters
-fs = cgi.FieldStorage()
+duration = safe_int(params.get('duration', '0'))
+end_time = safe_int(params.get('endTime', '0'))
+start_time = safe_int(params.get('startTime', '0'))
+dsname = params.get('dsname', '')
 
-duration = int(fs.getfirst('duration', '0'))
-end_time = int(fs.getfirst('endTime', '0'))
-start_time = int(fs.getfirst('startTime', '0'))
-dsname = fs.getfirst('dsname', '')
-
+# Sanitize dsname to prevent path traversal
 if dsname:
-        datapath = data_dir + dsname
+    if not re.match(r'^[a-zA-Z0-9_\-]+$', dsname):
+        dsname = def_dsname
+    datapath = os.path.join(data_dir, dsname)
 else:
-        datapath = data_dir + def_dsname
+    datapath = os.path.join(data_dir, def_dsname)
 
 (files, start_time, end_time) = common.get_fnames(datapath, duration, start_time, end_time)
 
-# generate a command
-cmd = agurimcmd + common.generate_cmdargs(fs.getfirst('criteria'), fs.getfirst('interval'), fs.getfirst('threshold'), fs.getfirst('nflows'), duration, start_time, end_time, fs.getfirst('filter'), fs.getfirst('outfmt', 'text'), fs.getfirst('view'), files)
+# Validate criteria, outfmt, view
+criteria = params.get('criteria', '')
+if criteria not in ('byte', 'packet'):
+    criteria = ''
 
-# exec command
-#sys.stderr.write('datapath: %s cmd: %s' % (datapath, cmd))        
-args = shlex.split(cmd)
-try:
-        res = subprocess.check_output(args, cwd=datapath, stderr=subprocess.STDOUT)
-except subprocess.CalledProcessError as e:
-        sys.stderr.write('cmd failed!:' + e.output)
+outfmt = params.get('outfmt', 'text')
+if outfmt not in ('json', 'text', 'file'):
+    outfmt = 'text'
 
-if fs.getfirst('outfmt', 'text') == 'json':
-        if isinstance(res, str) and res:
-                res = ast.literal_eval(res)
-        res['cmd'] = cmd
-sys.stdout.write(json.dumps(res, indent=1))
+view = params.get('view', '')
+if view != 'proto':
+    view = ''
+
+filter_val = params.get('filter', '')
+if filter_val and not re.match(r'^[a-zA-Z0-9_\-.:/ %]+$', filter_val):
+    filter_val = ''
+
+interval = safe_int(params.get('interval', '0'))
+threshold = safe_int(params.get('threshold', '0'))
+nflows = safe_int(params.get('nflows', '0'))
+
+# generate command
+cmd_args = common.generate_cmdargs(
+    criteria,
+    interval if interval > 0 else None,
+    threshold if threshold > 0 else None,
+    nflows if nflows > 0 else None,
+    duration if duration > 0 else None,
+    start_time if start_time > 0 else None,
+    end_time if end_time > 0 else None,
+    filter_val,
+    outfmt,
+    view,
+    files
+)
+cmd = agurimcmd + cmd_args
+
+res = ""
+if os.path.exists(datapath) and files:
+    args = shlex.split(cmd)
+    try:
+        res = subprocess.check_output(args, cwd=datapath, stderr=subprocess.STDOUT, text=True)
+    except subprocess.CalledProcessError as e:
+        sys.stderr.write('cmd failed: ' + str(e.output) + '\n')
+        res = ""
+    except Exception as e:
+        sys.stderr.write('exec failed: ' + str(e) + '\n')
+        res = ""
+
+sys.stdout.write("Content-Type: application/json\r\n\r\n")
+
+if outfmt == 'json':
+    out_obj = {}
+    if isinstance(res, str) and res.strip():
+        try:
+            out_obj = ast.literal_eval(res)
+        except Exception:
+            try:
+                out_obj = json.loads(res)
+            except Exception:
+                out_obj = {}
+    if not isinstance(out_obj, dict):
+        out_obj = {}
+    out_obj['cmd'] = cmd
+    sys.stdout.write(json.dumps(out_obj, indent=1))
+else:
+    sys.stdout.write(res if isinstance(res, str) else "")
 
 sys.stdout.write("\n")
 sys.stdout.close()

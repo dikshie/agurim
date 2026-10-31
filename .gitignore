@@ -1,0 +1,14 @@
+# Compiled binaries and objects
+*.o
+*.core
+*~
+src/agurim
+src/aguri3
+src/aguri3_xflow/aguri3_xflow
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local tool config
+.agents/

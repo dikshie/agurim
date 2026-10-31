@@ -511,8 +511,7 @@ ip4f_alloc(void)
 }
 
 static void
-ip4f_free(fp)
-	struct ip4_frag *fp;
+ip4f_free(struct ip4_frag *fp)
 {
 	TAILQ_REMOVE(&ip4f_list, fp, ip4f_chain);
 	fp->ip4f_valid = 0;
