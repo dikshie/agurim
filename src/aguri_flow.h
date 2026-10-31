@@ -27,14 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __packed
-#if defined(__GNUC__) || defined(__clang__)
-#define __packed __attribute__((__packed__))
-#else
-#define __packed
-#endif
-#endif
-
 /*
  * aguri flow entry format.
  * aguri_xflow converts netflow/sflow entries into this format.
@@ -48,7 +40,7 @@ struct flow_spec {
 	u_int8_t   fs_ipver;		/* IP version, 4 or 6 */
 	u_int8_t   fs_prot;		/* IP protocol */
 	u_int16_t  fs_pad;		/* padding */
-} __packed;
+} __attribute__((__packed__));
 
 struct aguri_flow {
 	struct flow_spec agflow_fs;	/* agurim flow spec */

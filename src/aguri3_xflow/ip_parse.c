@@ -99,7 +99,7 @@ struct sflow_ethernet_frame_t {
     u_int8_t src_mac[8];
     u_int8_t dst_mac[8];
     u_int32_t type;
-} __packed;
+} __attribute__((__packed__));
 #endif
 
 void
