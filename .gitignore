@@ -9,6 +9,8 @@ src/aguri3_xflow/aguri3_xflow
 # Python
 __pycache__/
 *.py[cod]
+.venv/
+.ruff_cache/
 
 # Local tool config
 .agents/

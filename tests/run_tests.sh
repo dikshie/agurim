@@ -44,9 +44,14 @@ if echo "${OUT_FILTER}" | grep -q "192.0.2.2"; then
 fi
 echo "  -> Protocol view and filter options verified."
 
-# 5. Test Python 3 CGI scripts and dev server
-echo "[Test 6/7] Testing Python 3 compilation and CGI scripts..."
+# 5. Test Python 3 CGI scripts, linting and dev server
+echo "[Test 6/7] Testing Python 3 compilation, linting, and CGI scripts..."
 python3 -m py_compile cgi-bin/*.py cgi-bin/*.cgi scripts/*.py
+if command -v ruff >/dev/null 2>&1; then
+    ruff check . cgi-bin/*.cgi
+elif command -v uv >/dev/null 2>&1; then
+    uv run ruff check . cgi-bin/*.cgi
+fi
 CGI_OUT=$(QUERY_STRING="outfmt=json&criteria=byte" python3 cgi-bin/myagurim.cgi)
 echo "${CGI_OUT}" | grep -q "Content-Type: application/json"
 TEST_CGI_OUT=$(python3 cgi-bin/test.cgi)

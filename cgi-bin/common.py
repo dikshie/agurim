@@ -1,15 +1,14 @@
-import sys
-import os.path
-import os
-import fnmatch
-import json
-import time
 import datetime
+import fnmatch
+import os
+import os.path
+import time
 
 YEAR = 31536000
 MONTH = 2592000
 DAY = 86400
 DURATION = DAY  # default duration is 1 day
+
 
 #
 # naming for agurim log
@@ -30,48 +29,64 @@ def combine_fnames(start, end, path):
         ret = combine_fine_grain_files(start, end, path)
     return ret
 
-def combine_yearly_files(start, end, path, fmt='%Y', grad=YEAR, files=''):
+
+def combine_yearly_files(start, end, path, fmt="%Y", grad=YEAR, files=""):
     last_fname = ""  # to check a duplicate file in a leap year
     while start < end + grad:
         start_str = datetime.datetime.fromtimestamp(start).strftime(fmt)
-        fname = "%s.agr" % start_str
+        fname = f"{start_str}.agr"
         full_path = os.path.join(path, fname)
         if fname != last_fname and os.path.exists(full_path):
-            files += " %s" % fname
+            files += f" {fname}"
             last_fname = fname
         start += grad
     return files
+
 
 def last_day_of_month(date):
     if date.month == 12:
         return 31
     return (date.replace(month=date.month + 1, day=1) - datetime.timedelta(days=1)).day
 
-def combine_monthly_files(start, end, path, fmt='%Y%m', files=''):
+
+def combine_monthly_files(start, end, path, fmt="%Y%m", files=""):
     grad = DAY
     # convert start to the first day of the month
     monthstart = datetime.datetime.fromtimestamp(start).replace(day=1)
     start = time.mktime(monthstart.timetuple())
     while start < end + grad:
         start_str = datetime.datetime.fromtimestamp(start).strftime(fmt)
-        fname = "%s.agr" % os.path.join(start_str, start_str)
+        fname = f"{os.path.join(start_str, start_str)}.agr"
         if os.path.exists(os.path.join(path, fname)):
-            files += " %s" % fname
+            files += f" {fname}"
         grad = last_day_of_month(datetime.datetime.fromtimestamp(start)) * DAY
         start += grad
     return files
 
-def combine_daily_files(start, end, path, fmt='%Y%m%d', grad=DAY, subfmt='%Y%m', files=''):
+
+def combine_daily_files(
+    start, end, path, fmt="%Y%m%d", grad=DAY, subfmt="%Y%m", files=""
+):
     while start < end + grad:
         start_str = datetime.datetime.fromtimestamp(start).strftime(fmt)
         subdir_str = datetime.datetime.fromtimestamp(start).strftime(subfmt)
-        fname = "%s.agr" % os.path.join(subdir_str, start_str, start_str)
+        fname = f"{os.path.join(subdir_str, start_str, start_str)}.agr"
         if os.path.exists(os.path.join(path, fname)):
-            files += " %s" % fname
+            files += f" {fname}"
         start += grad
     return files
 
-def combine_fine_grain_files(start, end, path, fmt='%Y%m%d.%H', grad=3600, subfmt='%Y%m', subfmt2='%Y%m%d', files=''):
+
+def combine_fine_grain_files(
+    start,
+    end,
+    path,
+    fmt="%Y%m%d.%H",
+    grad=3600,
+    subfmt="%Y%m",
+    subfmt2="%Y%m%d",
+    files="",
+):
     while start < end + grad:
         start_str = datetime.datetime.fromtimestamp(start).strftime(fmt)
         subdir_str = datetime.datetime.fromtimestamp(start).strftime(subfmt)
@@ -80,10 +95,11 @@ def combine_fine_grain_files(start, end, path, fmt='%Y%m%d.%H', grad=3600, subfm
         dir_path = os.path.join(path, subdir_str3)
         if os.path.exists(dir_path):
             for fname in sorted(os.listdir(dir_path)):
-                if fnmatch.fnmatchcase(fname, '%s*.agr' % start_str):
-                    files += " %s/%s" % (subdir_str3, fname)
+                if fnmatch.fnmatchcase(fname, f"{start_str}*.agr"):
+                    files += f" {subdir_str3}/{fname}"
         start += grad
     return files
+
 
 def get_fnames(path, duration, start_time=0, end_time=0):
     # compute start and end:
@@ -108,31 +124,44 @@ def get_fnames(path, duration, start_time=0, end_time=0):
     res = combine_fnames(ts1, ts2, path)
     return (res, int(ts1), int(ts2))
 
-def generate_cmdargs(criteria, interval, threshold, nflows, duration, start_time, end_time, filter_val, outfmt, view, files):
-    args = ''
-    if outfmt == 'json':
-        args += ' -p'
-    if outfmt == 'file':
-        args += ' -d'
+
+def generate_cmdargs(
+    criteria,
+    interval,
+    threshold,
+    nflows,
+    duration,
+    start_time,
+    end_time,
+    filter_val,
+    outfmt,
+    view,
+    files,
+):
+    args = ""
+    if outfmt == "json":
+        args += " -p"
+    if outfmt == "file":
+        args += " -d"
 
     if criteria:
-        args += ' -m %s' % criteria
+        args += f" -m {criteria}"
     if interval:
-        args += ' -i %s' % int(interval)
+        args += f" -i {int(interval)}"
     if threshold:
-        args += ' -t %s' % int(threshold)
+        args += f" -t {int(threshold)}"
     if nflows:
-        args += ' -n %s' % int(nflows)
+        args += f" -n {int(nflows)}"
     if duration:
-        args += ' -s %s' % int(duration)
+        args += f" -s {int(duration)}"
     if start_time:
-        args += ' -S %s' % int(start_time)
+        args += f" -S {int(start_time)}"
     if end_time:
-        args += ' -E %s' % int(end_time)
+        args += f" -E {int(end_time)}"
     if filter_val:
-        args += ' -f "%s"' % filter_val.replace("%20", " ")
-    if view and view == 'proto':
-        args += ' -P'
+        args += ' -f "{}"'.format(filter_val.replace("%20", " "))
+    if view and view == "proto":
+        args += " -P"
     if files:
-        args += ' %s' % files
+        args += f" {files}"
     return args
