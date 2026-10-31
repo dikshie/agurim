@@ -64,9 +64,7 @@ def combine_monthly_files(start, end, path, fmt="%Y%m", files=""):
     return files
 
 
-def combine_daily_files(
-    start, end, path, fmt="%Y%m%d", grad=DAY, subfmt="%Y%m", files=""
-):
+def combine_daily_files(start, end, path, fmt="%Y%m%d", grad=DAY, subfmt="%Y%m", files=""):
     while start < end + grad:
         start_str = datetime.datetime.fromtimestamp(start).strftime(fmt)
         subdir_str = datetime.datetime.fromtimestamp(start).strftime(subfmt)

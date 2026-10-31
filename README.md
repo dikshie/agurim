@@ -57,5 +57,53 @@ user interface.
     - edit 'cgi_path' for 'cgi-bin', in 'js/myagurim.js'.
     - edit 'timeoffset', timezone offset, in 'js/myagurim.js'.
 
+# AI Multi-Agent Intelligence (Google ADK)
+
+Agurim includes a built-in multi-agent Network Operations Center (AI NOC Team) powered by [Google ADK (Agent Development Kit)](https://github.com/google/adk-python):
+
+- **AgurimNocCoordinator (`LlmAgent`)**: Lead orchestrator that interfaces with users and dispatches tasks.
+- **AgurimDataEngineer (`LlmAgent`)**: Translates queries into Agurim re-aggregation parameters and extracts HHH records.
+- **ParallelAnomalyTeam (`ParallelAgent`)**: Parallel triage across:
+  - `VolumeAnalyst`: Bandwidth/packet spikes and burst ratios.
+  - `ProtoSignatureAnalyst`: Protocol/port amplification (DNS/NTP/SSDP) and sweeps.
+  - `ThreatIntelAnalyst`: Prefix WHOIS, ASN attribution, and CDN classification.
+- **MitigationSafetyPipeline (`SequentialAgent`)**:
+  - `MitigationPlanner`: Synthesizes BGP Flowspec (RFC 8955), Cisco ACL, and Linux nftables rules.
+  - `SafetyCritic`: Audits rules to ensure critical infrastructure is not blocked.
+- **Autonomous Sentinel (`agurim_agent.sentinel`)**: Continuous watchdog monitoring incoming flows and generating incident alerts.
+
+### Quickstart
+
+1. **Configure API credentials** (optional for local/test mode):
+   ```bash
+   cp agurim_agent/.env.example agurim_agent/.env
+   # Edit agurim_agent/.env with your GEMINI_API_KEY
+   ```
+
+2. **Launch Dev Server with AI Copilot**:
+   ```bash
+   python3 scripts/serve.py 8000
+   ```
+   Open `http://localhost:8000/index.html` and click **"AI Copilot"** to interact with the multi-agent team.
+
+3. **Run ADK CLI & Developer Web UI**:
+   ```bash
+   # CLI chat with the NOC Coordinator
+   adk run agurim_agent
+
+   # ADK Visual Web UI
+   adk web
+   ```
+
+4. **Run Autonomous Sentinel Watchdog**:
+   ```bash
+   # One-shot scan
+   python3 -m agurim_agent.sentinel --once
+
+   # Continuous monitoring
+   python3 -m agurim_agent.sentinel --interval 60 --threshold 20000000
+   ```
+
+
 
 
