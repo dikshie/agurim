@@ -1,0 +1,100 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master ]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-test:
+    name: Build & Test (${{ matrix.os }} - ${{ matrix.cc }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cc: gcc
+          - os: ubuntu-latest
+            cc: clang
+          - os: macos-latest
+            cc: clang
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install System Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpcap-dev build-essential
+
+      - name: Verify Shell Scripts Syntax
+        run: |
+          sh -n scripts/*.sh tests/*.sh
+
+      - name: Compile and Run Test Suite
+        env:
+          CC: ${{ matrix.cc }}
+        run: |
+          ./tests/run_tests.sh
+
+  release:
+    name: Package & Release
+    needs: build-and-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x86_64
+          - os: macos-latest
+            target: macos-universal
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpcap-dev build-essential
+
+      - name: Build Binaries
+        run: |
+          cd src && make clean && make
+          cd aguri3_xflow && make clean && make
+
+      - name: Prepare Package
+        run: |
+          PKG_DIR="agurim-${{ github.ref_name }}-${{ matrix.target }}"
+          mkdir -p "${PKG_DIR}/bin" "${PKG_DIR}/cgi-bin" "${PKG_DIR}/scripts"
+          cp src/agurim src/aguri3 "${PKG_DIR}/bin/"
+          cp src/aguri3_xflow/aguri3_xflow "${PKG_DIR}/bin/"
+          cp cgi-bin/*.py cgi-bin/*.cgi "${PKG_DIR}/cgi-bin/"
+          cp scripts/*.sh scripts/*.py "${PKG_DIR}/scripts/"
+          cp index.html detail.html about.html README.md LICENSE "${PKG_DIR}/"
+          cp -r css fonts img js "${PKG_DIR}/"
+          tar -czf "${PKG_DIR}.tar.gz" "${PKG_DIR}"
+          echo "ARCHIVE=${PKG_DIR}.tar.gz" >> $GITHUB_ENV
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ARCHIVE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
