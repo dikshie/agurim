@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import os
 
-from google.adk.agents import LlmAgent
+try:
+    from google.adk.agents import LlmAgent
+except ImportError:  # Fallback if google-adk is not installed in the environment
+    class LlmAgent:  # type: ignore[no-redef]
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
 
 from agurim_agent.tools import (
     list_datasets_and_ranges,

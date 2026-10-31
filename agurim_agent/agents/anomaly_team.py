@@ -5,11 +5,21 @@ from __future__ import annotations
 import os
 import warnings
 
-from google.adk.agents import LlmAgent
+try:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        from google.adk.agents import LlmAgent
+        from google.adk.agents.parallel_agent import ParallelAgent
+except ImportError:  # Fallback if google-adk is not installed in the environment
+    class LlmAgent:  # type: ignore[no-redef]
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", DeprecationWarning)
-    from google.adk.agents.parallel_agent import ParallelAgent
+    class ParallelAgent:  # type: ignore[no-redef]
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
 
 from agurim_agent.tools import lookup_asn_and_threat
 

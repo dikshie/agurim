@@ -5,8 +5,25 @@ from __future__ import annotations
 import os
 import re
 
-from google.adk.agents import LlmAgent
-from google.adk.tools import AgentTool
+try:
+    from google.adk.agents import LlmAgent
+    from google.adk.tools import AgentTool
+
+    HAS_GOOGLE_ADK = True
+except ImportError:  # Fallback if google-adk is not installed in the environment
+
+    class LlmAgent:  # type: ignore[no-redef]
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    class AgentTool:  # type: ignore[no-redef]
+        def __init__(self, agent=None, **kwargs):
+            self.agent = agent
+            self.name = getattr(agent, "name", "agent_tool")
+            self.description = getattr(agent, "description", "")
+
+    HAS_GOOGLE_ADK = False
 
 from agurim_agent.agents.anomaly_team import parallel_anomaly_team
 from agurim_agent.agents.data_engineer import data_engineer_agent
@@ -188,4 +205,5 @@ def run_agent_query(user_prompt: str, context: dict | None = None) -> dict:
         "traces": traces,
         "ui_action": ui_action,
         "has_live_gemini": has_api_key,
+        "has_google_adk": HAS_GOOGLE_ADK,
     }

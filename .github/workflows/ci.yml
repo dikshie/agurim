@@ -36,7 +36,7 @@ jobs:
 
       - name: Install Python Tools
         run: |
-          pip install ruff
+          pip install ruff google-adk
 
       - name: Install System Dependencies (Linux)
         if: runner.os == 'Linux'
