@@ -388,11 +388,7 @@ file_parse(char **files)
 			(void)fclose(fp);
                 }   
         } else  {
-#ifdef __linux__
-		strncpy(file, *files, sizeof(file));
-#else		
-		strlcpy(file, *files, sizeof(file));
-#endif		
+		snprintf(file, sizeof(file), "%s", *files);
 		if ((fp = fopen(file, "r")) == NULL)
 			err(1, "can't open %s", file);
 		read_file(fp);

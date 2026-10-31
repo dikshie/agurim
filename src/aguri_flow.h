@@ -27,6 +27,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef __packed
+#if defined(__GNUC__) || defined(__clang__)
+#define __packed __attribute__((__packed__))
+#else
+#define __packed
+#endif
+#endif
+
 /*
  * aguri flow entry format.
  * aguri_xflow converts netflow/sflow entries into this format.
